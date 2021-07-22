@@ -1,0 +1,53 @@
+html {
+  font-family: "Inconsolata", monospace;
+  height: 100%;
+}
+
+body {
+  color: #eee;
+  background-color: #222;
+  font-size: 110px;
+  height: 100%;
+}
+
+h3 {
+  font-size: 10px;
+  color: #666;
+  text-align: center;
+  height: 0%;
+}
+
+.words {
+  height: 100%;
+}
+
+.column {
+  float: left;
+  width: 46%;
+  height: 100%;
+}
+
+.words:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+.column-content {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  margin: auto;
+  align-items: center;
+  justify-content: center;
+}
+
+#french-word-column {
+  text-align: right;
+  padding-right: 2%;
+}
+
+#english-word-column {
+  text-align: left;
+  padding-left: 2%;
+}
