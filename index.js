@@ -37,13 +37,20 @@ function getNewWord() {
 }
 
 function ggGoNext() {
-    if (isWordHidden('french')) {
+    if (answered === false) {
         showWord('french', newWord.targetWord);
+        answered = true;
     } else {
         newWord = getNewWord();
         showWord('english', newWord.englishWord);
         hideWord('french');
+        answered = false;
+        guessString = "";
     }
+}
+
+function isLetter(char) {
+    return char.length === 1 && char.match(/[a-z]/i)
 }
 
 fetch('https://raw.githubusercontent.com/SMenigat/thousand-most-common-words/master/words/fr.json')
@@ -54,10 +61,19 @@ fetch('https://raw.githubusercontent.com/SMenigat/thousand-most-common-words/mas
         showWord('english', newWord.englishWord);
     });
 
+let guessString = "";
+let answered = false;
+
 document.addEventListener('keydown', (event) => {
     console.log(event);
     if (event.key === 'Enter') {
         ggGoNext();
+    } else if (isLetter(event.key) || event.code === 'Space') {
+        guessString = guessString + event.key;
+        showWord('french', guessString);
+    } else if (event.code === 'Backspace') {
+        guessString = guessString.slice(0, -1);
+        showWord('french', guessString);
     }
 });
 
