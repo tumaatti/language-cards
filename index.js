@@ -46,7 +46,7 @@ function ggGoNext() {
     }
 }
 
-fetch( 'https://raw.githubusercontent.com/SMenigat/thousand-most-common-words/master/words/fr.json')
+fetch('https://raw.githubusercontent.com/SMenigat/thousand-most-common-words/master/words/fr.json')
     .then((res) => res.json())
     .then((res) => {
         words = new TheBigWord(res.words);
