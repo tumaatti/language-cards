@@ -43,11 +43,11 @@ h3 {
 }
 
 #french-word-column {
-  text-align: right;
+  text-align: left;
   padding-right: 2%;
 }
 
 #english-word-column {
-  text-align: left;
+  text-align: right;
   padding-left: 2%;
 }

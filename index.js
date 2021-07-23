@@ -37,12 +37,12 @@ function getNewWord() {
 }
 
 function ggGoNext() {
-    if (isWordHidden('english')) {
-        showWord('english', newWord.englishWord);
+    if (isWordHidden('french')) {
+        showWord('french', newWord.targetWord);
     } else {
         newWord = getNewWord();
-        showWord('french', newWord.targetWord);
-        hideWord('english');
+        showWord('english', newWord.englishWord);
+        hideWord('french');
     }
 }
 
@@ -51,7 +51,7 @@ fetch( 'https://raw.githubusercontent.com/SMenigat/thousand-most-common-words/ma
     .then((res) => {
         words = new TheBigWord(res.words);
         newWord = words.rndWord;
-        showWord('french', newWord.targetWord);
+        showWord('english', newWord.englishWord);
     });
 
 document.addEventListener('keydown', (event) => {
