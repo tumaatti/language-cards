@@ -12,11 +12,6 @@ class TheBigWord {
     }
 }
 
-const keyCodes = {
-    enter: 13,
-    // space:
-}
-
 let newWord;
 let words;
 
@@ -32,16 +27,12 @@ function isWordHidden(language) {
     return document.getElementById(`${language}-word`).innerHTML === ""
 }
 
-function getNewWord() {
-    return words.rndWord
-}
-
 function ggGoNext() {
     if (answered === false) {
         showWord('french', newWord.targetWord);
         answered = true;
     } else {
-        newWord = getNewWord();
+        newWord = words.rndWord;
         showWord('english', newWord.englishWord);
         hideWord('french');
         answered = false;
