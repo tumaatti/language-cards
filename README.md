@@ -5,4 +5,4 @@ in Vanilla Javascript.
 
 Hosted on [Github Pages](https://tumaatti.github.io/language-cards/).
 
-The repo is using the word list from [github.com/SMenigat/thousnd-most-common-words](https://github.com/SMenigat/thousand-most-common-words/).
+The repo is using the word list from [github.com/SMenigat/thousand-most-common-words](https://github.com/SMenigat/thousand-most-common-words/).
