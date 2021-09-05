@@ -1,8 +1,9 @@
 import express = require('express');
+import session = require('express-session');
 import sqlite = require('sqlite3');
 import { Request, Response } from 'express';
 
-import { hashPassword } from './hashPassword';
+import { hashPassword, checkPassword } from './hashPassword';
 
 interface WordsDatabaseRow {
     rank: number;
@@ -10,6 +11,7 @@ interface WordsDatabaseRow {
     englishWord: string;
 }
 
+/*
 interface UserAnswer {
     rank: number;
     targetWord: string;
@@ -17,25 +19,46 @@ interface UserAnswer {
     correct: boolean;
 }
 
-interface UserDatabaseRow {
+interface IndividualUserDatabaseRow {
     rank: number;
     targetWord: string;
     englishWord: string;
     succesRate: number;
 }
+*/
+
+interface UserDatabaseRow {
+    username: string;
+    passwordHash: string;
+    passwordSalt: string;
+    passwordIterations: number;
+}
 
 const app = express();
 app.use(express.json());
+app.use(session({
+    secret: 'vewy big secwet',
+    resave: false,
+    saveUninitialized: false
+}));
 
 const port = 6969;
 const db = new sqlite.Database('language-cards.db');
 
+// TODO: we must probably also create the database for user's words and succes rates
 app.post('/addUser', function(req: Request, res: Response) {
+    /* request POST
+     * {
+     *  "username": "username",
+     *  "password": "asdf"
+     * }
+     */
+
     const username = req.body.username;
     const password = hashPassword(String(req.body.password));
 
     let checkUserQuery = `SELECT username FROM users WHERE username=?`;
-    db.get(checkUserQuery, [username], function(err: Error, userDatabaseRow:  UserDatabaseRow) {
+    db.get(checkUserQuery, [username], function(err: Error, userDatabaseRow: UserDatabaseRow) {
         if (err) {
             res.status(400).json({'error': err.message});
         } else if (userDatabaseRow !== undefined) {
@@ -50,11 +73,49 @@ app.post('/addUser', function(req: Request, res: Response) {
                     res.send('OK');
                 }
             });
+            let createNewTable = `CREATE TABLE "${username}" ("rank" INTEGER, "targetWord" TEXT, "englishWord" TEXT, "successRate" INTEGER)`;
+            db.run(createNewTable, function(err: Error) {
+                if (err) {
+                    res.status(400).json({'error': err.message});
+                }
+            });
         }
     })
 });
 
-app.get('/', (_: Request, res: Response) => {
+// TODO: this needs to be checked if this really works -- i have my doupts
+// https://github.com/expressjs/express/blob/06d11755c99fe4c1cddf8b889a687448b568472d/examples/auth/index.js#L73
+app.post('/login', function(req: Request, res: Response) {
+    /* request POST
+     * {
+     *  "username": "username",
+     *  "password": "asdf"
+     * }
+     */
+
+    const username = req.body.username;
+    const password = req.body.password;
+
+    let checkUsersQuery = `SELECT username, passwordHash, passwordSalt FROM users WHERE username=?`
+    db.get(checkUsersQuery, [username], function(err: Error, row: UserDatabaseRow) {
+        if (err) {
+            res.status(400).json({'error': err.message});
+        } else if (row === undefined) {
+            res.status(400).json({'error': 'user not found'});
+        } else {
+            const hash = checkPassword(password, row.passwordSalt);
+            if (hash === row.passwordHash) {
+                req.session.regenerate(function() {
+                    res.json({'login': 'success', 'username': username});
+                });
+            }
+        }
+    });
+});
+
+// TODO: Logout
+
+app.get('/', function(_: Request, res: Response) {
     let q = `SELECT * FROM "words-fr"`;
     db.all(q, function(err: Error, rows: WordsDatabaseRow[]) {
         if (err) {
