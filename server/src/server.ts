@@ -1,6 +1,7 @@
 import express = require('express');
 import session = require('express-session');
 import sqlite = require('sqlite3');
+import mostCommonWords = require('thousand-most-common-words');
 import { Request, Response } from 'express';
 
 import { hashPassword, checkPassword } from './hashPassword';
@@ -45,7 +46,6 @@ app.use(session({
 const port = 6969;
 const db = new sqlite.Database('language-cards.db');
 
-// TODO: we must probably also create the database for user's words and succes rates
 app.post('/addUser', function(req: Request, res: Response) {
     /* request POST
      * {
@@ -67,24 +67,31 @@ app.post('/addUser', function(req: Request, res: Response) {
             let insertUserQuery =
                 `INSERT INTO users VALUES("${username}", "${password.hash}", "${password.salt}", "${password.iterations}")`
             db.run(insertUserQuery, function(err: Error) {
-                if (err) {
-                    res.status(400).json({'error': err.message});
-                } else {
-                    res.send('OK');
-                }
+                if (err) res.status(400).json({'error': err.message});
+                else res.send('OK');
             });
+
             let createNewTable = `CREATE TABLE "${username}" ("rank" INTEGER, "targetWord" TEXT, "englishWord" TEXT, "successRate" INTEGER)`;
             db.run(createNewTable, function(err: Error) {
-                if (err) {
-                    res.status(400).json({'error': err.message});
-                }
+                if (err) res.status(400).json({'error': err.message});
             });
+
+            const words = mostCommonWords.getWordsByLanguageCode('fr');
+            for (let i = 0; i < words.length; i++) {
+                let word = words[i];
+                let populateTable = `INSERT INTO ${username} VALUES("${word.rank}", "${word.targetWord}", "${word.englishWord}", 0)`
+                db.run(populateTable, function(err: Error) {
+                    if (err) res.status(400).json({'error': err.message});
+                    else res.send('OK');
+                });
+            }
         }
     })
 });
 
 // TODO: this needs to be checked if this really works -- i have my doupts
 // https://github.com/expressjs/express/blob/06d11755c99fe4c1cddf8b889a687448b568472d/examples/auth/index.js#L73
+// maybe some documentation how to check for signed in user?
 app.post('/login', function(req: Request, res: Response) {
     /* request POST
      * {
