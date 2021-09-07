@@ -1,10 +1,18 @@
 import express = require('express');
 import session = require('express-session');
+import cookieParser = require('cookie-parser');
 import sqlite = require('sqlite3');
 import mostCommonWords = require('thousand-most-common-words');
 import { Request, Response } from 'express';
 
 import { hashPassword, checkPassword } from './hashPassword';
+
+declare module 'express-session' {
+    interface SessionData {
+        username: string
+        loggedin: boolean
+    }
+}
 
 interface WordsDatabaseRow {
     rank: number;
@@ -37,10 +45,11 @@ interface UserDatabaseRow {
 
 const app = express();
 app.use(express.json());
+app.use(cookieParser());
 app.use(session({
     secret: 'vewy big secwet',
     resave: false,
-    saveUninitialized: false
+    saveUninitialized: true,
 }));
 
 const port = 6969;
@@ -89,9 +98,6 @@ app.post('/addUser', function(req: Request, res: Response) {
     })
 });
 
-// TODO: this needs to be checked if this really works -- i have my doupts
-// https://github.com/expressjs/express/blob/06d11755c99fe4c1cddf8b889a687448b568472d/examples/auth/index.js#L73
-// maybe some documentation how to check for signed in user?
 app.post('/login', function(req: Request, res: Response) {
     /* request POST
      * {
@@ -113,6 +119,8 @@ app.post('/login', function(req: Request, res: Response) {
             const hash = checkPassword(password, row.passwordSalt);
             if (hash === row.passwordHash) {
                 req.session.regenerate(function() {
+                    req.session.username = username;
+                    req.session.loggedin = true;
                     res.json({'login': 'success', 'username': username});
                 });
             }
@@ -120,7 +128,16 @@ app.post('/login', function(req: Request, res: Response) {
     });
 });
 
-// TODO: Logout
+app.get('/checkLoggedin', function(req: Request, res: Response) {
+    res.json({'logged in as:': req.session.username, 'loggedin': req.session.loggedin});
+});
+
+app.get('/logout', function(req: Request, res: Response) {
+    req.session.destroy(function(err: Error) {
+        if (err) res.status(400).json({'error': err.message});
+    });
+    res.send('session destroyed');
+});
 
 app.get('/', function(_: Request, res: Response) {
     let q = `SELECT * FROM "words-fr"`;
@@ -136,6 +153,6 @@ app.get('/', function(_: Request, res: Response) {
 });
 
 
-app.listen(port, () => {
-    console.log('localhost:', port);
+app.listen(port, function() {
+    console.log(`localhost:${port}`);
 });
