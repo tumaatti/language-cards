@@ -3,18 +3,12 @@
 // it out
 
 import sqlite = require('sqlite3');
-import request = require('request');
+import mostCommonWords = require('thousand-most-common-words');
 
 import { Database } from 'sqlite3';
 
 interface TableName {
     name: string;
-}
-
-interface Word {
-    rank: number;
-    targetWord: string;
-    englishWord: string;
 }
 
 async function createDatabase(databaseName: string): Promise<Database> {
@@ -45,7 +39,7 @@ async function checkIfTableExistsAndCreate(db: Database, tableName: string) {
     });
 }
 
-async function getDataAndWriteToTable(databaseName: string, tableName: string, url: string): Promise<number> {
+async function getDataAndWriteToTable(databaseName: string, tableName: string): Promise<number> {
     let db = await createDatabase(databaseName);
     // check if table exists
     let query = `SELECT * FROM "${tableName}"`
@@ -60,25 +54,15 @@ async function getDataAndWriteToTable(databaseName: string, tableName: string, u
         }
     });
 
-    request(url, function(err: Error, res, body: string) {
-        if (!err && res.statusCode === 200) {
-            let bodyJson = JSON.parse(body);
-            for (let i = 0; i < bodyJson.words.length; i++) {
-                let w = bodyJson.words[i];
-                let word: Word = {
-                    rank: w.rank,
-                    targetWord: w.targetWord,
-                    englishWord: w.englishWord,
-                };
-                let insertWordsToDatabase = `INSERT INTO "${tableName}" VALUES(${word.rank}, "${word.targetWord}", "${word.englishWord}")`;
-                db.run(insertWordsToDatabase, function(err: Error) {
-                    if (err) {
-                        throw err;
-                    }
-                });
-            }
-        } db.close()
-    });
+    let words = mostCommonWords.getWordsByLanguageCode('fr');
+    for (let i = 0; i < words.length; i++) {
+        let word = words[i];
+        let insertWordsToDatabase = `INSERT INTO "${tableName}" VALUES(${word.rank}, "${word.targetWord}", "${word.englishWord}")`;
+        db.run(insertWordsToDatabase, function(err: Error) {
+            if (err) throw err;
+        });
+    }
+    db.close();
     return 0
 }
 
@@ -88,8 +72,7 @@ async function getWords() {
     let db = await createDatabase(databaseName);
     await checkIfTableExistsAndCreate(db, tableName);
     db.close();
-    let url = 'https://raw.githubusercontent.com/SMenigat/thousand-most-common-words/master/words/fr.json'
-    await getDataAndWriteToTable(databaseName, tableName, url);
+    await getDataAndWriteToTable(databaseName, tableName);
 }
 
 getWords();
