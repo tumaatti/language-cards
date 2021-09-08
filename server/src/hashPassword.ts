@@ -1,6 +1,6 @@
 import cr = require('crypto');
 
-interface Hash {
+export interface Hash {
     salt: string;
     iterations: number;
     hash: string;
