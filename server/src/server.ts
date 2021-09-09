@@ -27,14 +27,16 @@ interface UserAnswer {
     englishWord: string;
     correct: boolean;
 }
+*/
 
 interface IndividualUserDatabaseRow {
     rank: number;
     targetWord: string;
     englishWord: string;
+    tries: number;
+    correctTries: number;
     succesRate: number;
 }
-*/
 
 interface UsersTableRow {
     username: string;
@@ -59,8 +61,18 @@ function getRandomNumber(max: number) {
     return Math.floor(Math.random() * max);
 }
 
-function getWeightedRandomValue(array: UsersTableRow[]) {
-    // TODO: implement
+function getWeightedRandomRow(array: IndividualUserDatabaseRow[]): IndividualUserDataBaseRow | void {
+    let totalLength = 0;
+    for (let i = 0; i < array.length; i++) {
+        totalLength += array[i].succesRate;
+    }
+    const rnd = getRandomNumber(totalLength);
+    let tmp = 0;
+    for (let i = 0; i < array.length; i++) {
+        tmp += array[i].succesRate;
+        if (rnd <= tmp) {
+            return array[i];
+        }
 }
 
 function addUserToUsersTable(username: string, password: Hash) {
@@ -75,6 +87,7 @@ function addUserToUsersTable(username: string, password: Hash) {
 
 
 function createAndPopulateUserTable(res: Response, username: string) {
+    // TODO: maybe add langauge to table row to separate languages
     let createNewUserTable = `CREATE TABLE "${username}" ("rank" INTEGER, "targetWord" TEXT, "englishWord" TEXT, "tries" INTEGER, "correctTries" INTEGER, "successRate" INTEGER)`;
 
     db.run(createNewUserTable, function(err: Error) {
@@ -184,7 +197,7 @@ app.get('/', function(req: Request, res: Response) {
         if (err) {
             res.status(400).json({'error': err.message});
         } else {
-            console.log(rows);
+            res.status(400).json({'row': getWeightedRandomRow(rows)});
         }
     });
 
