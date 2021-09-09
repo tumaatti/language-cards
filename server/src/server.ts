@@ -27,14 +27,16 @@ interface UserAnswer {
     englishWord: string;
     correct: boolean;
 }
+*/
 
 interface IndividualUserDatabaseRow {
     rank: number;
     targetWord: string;
     englishWord: string;
-    succesRate: number;
+    tries: number;
+    correctTries: number;
+    successRate: number;
 }
-*/
 
 interface UsersTableRow {
     username: string;
@@ -59,8 +61,19 @@ function getRandomNumber(max: number) {
     return Math.floor(Math.random() * max);
 }
 
-function getWeightedRandomValue(array: UsersTableRow[]) {
-    // TODO: implement
+function getWeightedRandomRow(array: IndividualUserDatabaseRow[]): IndividualUserDatabaseRow {
+    let totalLength = 0;
+    for (let i = 0; i < array.length; i++) {
+        totalLength += array[i].successRate;
+    }
+    const rnd = getRandomNumber(totalLength);
+    let tmp = 0;
+    for (let i = 0; i < array.length; i++) {
+        tmp += array[i].successRate;
+        if (rnd <= tmp) {
+            return array[i];
+        }
+    }
 }
 
 function addUserToUsersTable(username: string, password: Hash) {
@@ -75,6 +88,7 @@ function addUserToUsersTable(username: string, password: Hash) {
 
 
 function createAndPopulateUserTable(res: Response, username: string) {
+    // TODO: maybe add langauge to table row to separate languages
     let createNewUserTable = `CREATE TABLE "${username}" ("rank" INTEGER, "targetWord" TEXT, "englishWord" TEXT, "tries" INTEGER, "correctTries" INTEGER, "successRate" INTEGER)`;
 
     db.run(createNewUserTable, function(err: Error) {
@@ -180,11 +194,13 @@ app.get('/', function(req: Request, res: Response) {
     }
     // user is logged in
     let getAllUserWords = `SELECT * FROM "${req.session.username}"`
-    db.all(getAllUserWords, function(err: Error, rows: UsersTableRow[]) {
+    db.all(getAllUserWords, function(err: Error, rows: IndividualUserDatabaseRow[]) {
         if (err) {
             res.status(400).json({'error': err.message});
         } else {
-            console.log(rows);
+            console.log(getWeightedRandomRow(rows));
+            res.json({'row': getWeightedRandomRow(rows)});
+            // res.json({'row': getWeightedRandomRow(rows)});
         }
     });
 
