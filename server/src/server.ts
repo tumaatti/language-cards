@@ -66,8 +66,10 @@ function getWeightedRandomRow(array: IndividualUserDatabaseRow[]): IndividualUse
     for (let i = 0; i < array.length; i++) {
         totalLength += array[i].successRate;
     }
+
     const rnd = getRandomNumber(totalLength);
     let tmp = 0;
+
     for (let i = 0; i < array.length; i++) {
         tmp += array[i].successRate;
         if (rnd <= tmp) {
@@ -200,7 +202,6 @@ app.get('/', function(req: Request, res: Response) {
         } else {
             console.log(getWeightedRandomRow(rows));
             res.json({'row': getWeightedRandomRow(rows)});
-            // res.json({'row': getWeightedRandomRow(rows)});
         }
     });
 
