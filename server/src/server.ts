@@ -4,9 +4,11 @@ import express = require('express');
 import mostCommonWords = require('thousand-most-common-words');
 import session = require('express-session');
 import sqlite = require('sqlite3');
+import cors = require('cors');
 
 import { Request, Response } from 'express';
 import { hashPassword, checkPassword, Hash } from './hashPassword';
+import { WordsTableRow, IndividualUserDatabaseRow, UsersTableRow } from './interfaces';
 
 declare module 'express-session' {
     interface SessionData {
@@ -15,41 +17,10 @@ declare module 'express-session' {
     }
 }
 
-interface WordsTableRow {
-    rank: number;
-    targetWord: string;
-    englishWord: string;
-}
-
-/*
-interface UserAnswer {
-    rank: number;
-    targetWord: string;
-    englishWord: string;
-    correct: boolean;
-}
-*/
-
-interface IndividualUserDatabaseRow {
-    // language: string; TODO
-    rank: number;
-    targetWord: string;
-    englishWord: string;
-    tries: number;
-    correctTries: number;
-    failureRate: number;
-}
-
-interface UsersTableRow {
-    username: string;
-    passwordHash: string;
-    passwordSalt: string;
-    passwordIterations: number;
-}
-
 const app = express();
 app.use(express.json());
 app.use(cookieParser());
+app.use(cors());
 app.use(session({
     secret: 'vewy big secwet',
     resave: false,
@@ -199,7 +170,7 @@ app.get('/', function(req: Request, res: Response) {
             else {
                 res.json({
                     "message": "success",
-                    "data": row
+                    "correctWord": row
                 });
             }
         });
