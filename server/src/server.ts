@@ -213,7 +213,7 @@ app.get('/', function(req: Request, res: Response) {
         } else {
             const correctWord = getWeightedRandomRow(rows);
             // not sure if these should be weighted randoms, i think the weighted are better for now
-            const wrongWords = [getWeightedRandomRow(rows).englishWord, getWeightedRandomRow(rows).englishWord];
+            const wrongWords = [getWeightedRandomRow(rows), getWeightedRandomRow(rows)];
             const resp = {
                 'correctWord': correctWord,
                 'wrongWords': wrongWords,
