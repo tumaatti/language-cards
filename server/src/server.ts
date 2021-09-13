@@ -1,3 +1,4 @@
+// TODO: add language field to user databases
 import cookieParser = require('cookie-parser');
 import express = require('express');
 import mostCommonWords = require('thousand-most-common-words');
@@ -30,12 +31,13 @@ interface UserAnswer {
 */
 
 interface IndividualUserDatabaseRow {
+    // language: string; TODO
     rank: number;
     targetWord: string;
     englishWord: string;
     tries: number;
     correctTries: number;
-    successRate: number;
+    failureRate: number;
 }
 
 interface UsersTableRow {
@@ -64,14 +66,14 @@ function getRandomNumber(max: number) {
 function getWeightedRandomRow(array: IndividualUserDatabaseRow[]): IndividualUserDatabaseRow {
     let totalLength = 0;
     for (let i = 0; i < array.length; i++) {
-        totalLength += array[i].successRate;
+        totalLength += array[i].failureRate;
     }
 
     const rnd = getRandomNumber(totalLength);
     let tmp = 0;
 
     for (let i = 0; i < array.length; i++) {
-        tmp += array[i].successRate;
+        tmp += array[i].failureRate;
         if (rnd <= tmp) {
             return array[i];
         }
@@ -91,7 +93,7 @@ function addUserToUsersTable(username: string, password: Hash) {
 
 function createAndPopulateUserTable(res: Response, username: string) {
     // TODO: maybe add langauge to table row to separate languages
-    let createNewUserTable = `CREATE TABLE "${username}" ("rank" INTEGER, "targetWord" TEXT, "englishWord" TEXT, "tries" INTEGER, "correctTries" INTEGER, "successRate" INTEGER)`;
+    let createNewUserTable = `CREATE TABLE "${username}" ("rank" INTEGER, "targetWord" TEXT, "englishWord" TEXT, "tries" INTEGER, "correctTries" INTEGER, "failureRate" INTEGER)`;
 
     db.run(createNewUserTable, function(err: Error) {
         if (err) {
@@ -176,6 +178,15 @@ app.get('/logout', function(req: Request, res: Response) {
 });
 
 app.post('/', function(_: Request, res: Response) {
+    /*
+     * POST
+     * {
+     *   'rank': number
+     *   'language': string
+     *   'correct': boolean
+     * }
+     */
+    // TODO: get user word guess
     res.json({'penispenis': 'penispenis'});
 });
 
@@ -200,14 +211,20 @@ app.get('/', function(req: Request, res: Response) {
         if (err) {
             res.status(400).json({'error': err.message});
         } else {
-            console.log(getWeightedRandomRow(rows));
-            res.json({'row': getWeightedRandomRow(rows)});
+            const correctWord = getWeightedRandomRow(rows);
+            // not sure if these should be weighted randoms, i think the weighted are better for now
+            const wrongWords = [getWeightedRandomRow(rows).englishWord, getWeightedRandomRow(rows).englishWord];
+            const resp = {
+                'correctWord': correctWord,
+                'wrongWords': wrongWords,
+            }
+            console.log(resp);
+            res.json(resp);
         }
     });
 
 });
 
-
 app.listen(port, function() {
     console.log(`http://localhost:${port}`);
-})
+});
